@@ -652,10 +652,11 @@ export class RichText extends Component {
 		);
 	}
 
-	onNodeChange( { parents } ) {
+	onNodeChange( { element, parents } ) {
 		if ( document.activeElement !== this.editor.getBody() ) {
 			return;
 		}
+
 		const formatNames = this.props.formattingControls;
 		const formats = this.editor.formatter.matchAll( formatNames ).reduce( ( accFormats, activeFormat ) => {
 			accFormats[ activeFormat ] = {
@@ -666,7 +667,14 @@ export class RichText extends Component {
 			return accFormats;
 		}, {} );
 
-		const rect = getRectangleFromRange( this.editor.selection.getRng() );
+		let rect;
+		if ( element.tagName === 'A' ) {
+			// If we selected a link, position the Link UI below the link
+			rect = element.getBoundingClientRect();
+		} else {
+			// Otherwise, position the Link UI below the cursor or text selection
+			rect = getRectangleFromRange( this.editor.selection.getRng() );
+		}
 		const focusPosition = this.getFocusPosition( rect );
 
 		this.setState( { formats, focusPosition, selectedNodeId: this.state.selectedNodeId + 1 } );
