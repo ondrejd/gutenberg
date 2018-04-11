@@ -518,6 +518,10 @@ export class RichText extends Component {
 				if ( event.shiftKey || ! this.props.onSplit ) {
 					this.editor.execCommand( 'InsertLineBreak', false, event );
 				} else {
+					// Splitting the content might destroy the editor, so it's
+					// important that we stop other handlers (e.g. ones
+					// registered by TinyMCE) from also handling this event.
+					event.stopImmediatePropagation();
 					this.splitContent();
 				}
 			}
@@ -682,13 +686,13 @@ export class RichText extends Component {
 		}
 	}
 
-	updateContent() {
+	updateContent( content ) {
 		// Do not trigger a change event coming from the TinyMCE undo manager.
 		// Our global state is already up-to-date.
 		this.editor.undoManager.ignore( () => {
 			const bookmark = this.editor.selection.getBookmark( 2, true );
 
-			this.savedContent = this.props.value;
+			this.savedContent = content;
 			this.setContent( this.savedContent );
 			this.editor.selection.moveToBookmark( bookmark );
 		} );
@@ -714,7 +718,7 @@ export class RichText extends Component {
 			this.props.value !== prevProps.value &&
 			this.props.value !== this.savedContent
 		) {
-			this.updateContent();
+			this.updateContent( this.props.value );
 
 			if (
 				'development' === process.env.NODE_ENV &&
@@ -777,14 +781,15 @@ export class RichText extends Component {
 
 	/**
 	 * Calling onSplit means we need to abort the change done by TinyMCE.
-	 * we need to call setContent to restore the initial content before calling onSplit.
+	 * we need to call updateContent to restore the initial content before calling onSplit.
 	 *
 	 * @param {Array}  before content before the split position
 	 * @param {Array}  after  content after the split position
 	 * @param {?Array} blocks blocks to insert at the split position
 	 */
 	restoreContentAndSplit( before, after, blocks = [] ) {
-		this.setContent( before );
+		this.updateContent( before );
+		this.onChange();
 		this.props.onSplit( before, after, ...blocks );
 	}
 
