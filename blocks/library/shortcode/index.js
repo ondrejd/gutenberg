@@ -71,7 +71,7 @@ export const settings = {
 						{ __( 'Shortcode' ) }
 					</label>
 					<PlainText
-						className="regular-text"
+						className="input-control"
 						id={ inputId }
 						value={ attributes.text }
 						placeholder={ __( 'Write shortcode here…' ) }
